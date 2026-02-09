@@ -1,0 +1,51 @@
+@baseUrl = http://localhost:8000
+@adminEmail = admin@example.com
+@adminPassword = admin123
+
+### 1️⃣ Login as Admin
+# @name login
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+    "email": "{{adminEmail}}",
+    "password": "{{adminPassword}}"
+}
+
+### Store Token
+@authToken = {{login.response.body.data.accessToken}}
+
+
+### 2️⃣ Get All Products (Public)
+GET {{baseUrl}}/api/products
+
+
+### 3️⃣ Add New Product (Admin Only)
+POST {{baseUrl}}/api/products
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+    "name": "API Design Product",
+    "slug": "api-design-product",
+    "sku": "API-001",
+    "price": 199.99,
+    "description": "Created via VSCode REST Client",
+    "stock_quantity": 50
+}
+
+
+### 4️⃣ Delete Product (Admin Only)
+# Replace :id with the actual ID from the Add Product response
+DELETE {{baseUrl}}/api/products/18
+Authorization: Bearer {{authToken}}
+
+
+### 5️⃣ Logout (Invalidate Current Session)
+POST {{baseUrl}}/auth/logout
+Authorization: Bearer {{authToken}}
+
+
+### 6️⃣ Logout All (Invalidate All Sessions for User)
+POST {{baseUrl}}/auth/logout-all
+Authorization: Bearer {{authToken}}
