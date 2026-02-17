@@ -336,6 +336,7 @@ export class ProductModel {
     max_price?: number;
     is_featured?: boolean;
     search?: string;
+    vendor_id?: number;
     limit?: number;
     offset?: number;
     sort_by?: 'price' | 'created_at' | 'name' | 'popularity';
@@ -348,6 +349,7 @@ export class ProductModel {
       max_price,
       is_featured,
       search,
+      vendor_id,
       limit = 20,
       offset = 0,
       sort_by = 'created_at',
@@ -380,6 +382,10 @@ export class ProductModel {
 
     if (is_featured !== undefined) {
       query = sql`${query} AND p.is_featured = ${is_featured}`;
+    }
+
+    if (vendor_id) {
+      query = sql`${query} AND p.vendor_id = ${vendor_id}`;
     }
 
     if (search) {

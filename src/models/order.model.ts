@@ -482,7 +482,7 @@ export class OrderModel {
       const [coupon] = await sql`
         SELECT id FROM coupons WHERE code = ${orderData.coupon_code}
       `;
-      
+
       if (coupon) {
         await sql`
           INSERT INTO coupon_usage (coupon_id, user_id, order_id, discount_amount)
@@ -593,8 +593,8 @@ export class OrderModel {
 
   // Update order status
   static async updateStatus(
-    orderId: number, 
-    newStatus: Order['status'], 
+    orderId: number,
+    newStatus: Order['status'],
     changedBy?: number,
     notes?: string
   ) {
@@ -685,7 +685,7 @@ export class OrderModel {
         SELECT COUNT(*) as count FROM coupon_usage 
         WHERE coupon_id = ${coupon.id} AND user_id = ${userId}
       `;
-      
+
       if (parseInt(usage.count) >= coupon.usage_limit_per_user) {
         throw new Error('You have already used this coupon');
       }
@@ -715,7 +715,7 @@ export class OrderModel {
   // Get order statistics
   static async getStats(userId?: number) {
     let query;
-    
+
     if (userId) {
       query = sql`
         SELECT 
@@ -738,7 +738,43 @@ export class OrderModel {
       `;
     }
 
+
     const [stats] = await query;
+    return stats;
+  }
+
+
+  // Get vendor orders (orders containing products from this vendor)
+  static async getVendorOrders(vendorId: number, limit: number = 20, offset: number = 0) {
+    const orders = await sql`
+      SELECT o.id, o.order_number, o.created_at, o.status, o.payment_status,
+             u.first_name, u.last_name,
+             SUM(oi.total_price) as vendor_total,
+             COUNT(oi.id) as item_count
+      FROM orders o
+      JOIN order_items oi ON o.id = oi.order_id
+      JOIN products p ON oi.product_id = p.id
+      LEFT JOIN users u ON o.user_id = u.id
+      WHERE p.vendor_id = ${vendorId}
+      GROUP BY o.id, o.order_number, o.created_at, o.status, o.payment_status, u.first_name, u.last_name
+      ORDER BY o.created_at DESC
+      LIMIT ${limit} OFFSET ${offset}
+    `;
+    return orders;
+  }
+
+  // Get vendor statistics
+  static async getVendorStats(vendorId: number) {
+    const [stats] = await sql`
+       SELECT 
+         COUNT(DISTINCT o.id) as total_orders,
+         COALESCE(SUM(oi.total_price), 0) as total_revenue,
+         COUNT(DISTINCT p.id) as total_products
+       FROM order_items oi
+       JOIN products p ON oi.product_id = p.id
+       JOIN orders o ON oi.order_id = o.id
+       WHERE p.vendor_id = ${vendorId}
+     `;
     return stats;
   }
 }

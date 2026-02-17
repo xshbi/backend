@@ -166,13 +166,58 @@ export class VendorModel {
                 tax_information, business_registration_number, incorporation_date, industry,
                 notes, tags
             ) VALUES (
-                ${user_id}, ${vendorCode}, ${name}, ${legalName || null}, ${type}, ${status || 'ACTIVE'},
-                ${email}, ${phone}, ${website || null},
-                ${sql.json(billingAddress)}, ${shippingAddress ? sql.json(shippingAddress) : null}, ${contactPersons ? sql.json(contactPersons) : sql.json([])},
-                ${paymentTerms}, ${creditLimit || null}, ${currency || 'USD'}, ${bankDetails ? sql.json(bankDetails) : null},
-                ${taxInformation ? sql.json(taxInformation) : null}, ${businessRegistrationNumber || null}, ${incorporationDate || null}, ${industry || null},
+                ${user_id as number}, ${vendorCode as string}, ${name as string}, ${legalName || null}, ${type as string}, ${status || 'ACTIVE'},
+                ${email as string}, ${phone as string}, ${website || null},
+                ${sql.json(billingAddress as any)}, ${shippingAddress ? sql.json(shippingAddress as any) : null}, ${contactPersons ? sql.json(contactPersons as any) : sql.json([])},
+                ${paymentTerms as string}, ${creditLimit || null}, ${currency || 'USD'}, ${bankDetails ? sql.json(bankDetails as any) : null},
+                ${taxInformation ? sql.json(taxInformation as any) : null}, ${businessRegistrationNumber || null}, ${incorporationDate || null}, ${industry || null},
                 ${notes || null}, ${tags || null}
             )
+            RETURNING *
+        `;
+
+        return vendor as unknown as Vendor;
+    }
+
+    static async update(userId: number, vendorData: Partial<Vendor>): Promise<Vendor | null> {
+        // Prepare update object dynamically or just update all fields provided
+        // Since we have many fields, building a dynamic query with `sql()` helper is best if using a query builder, 
+        // but with pure sql template tag, we typically update explicit columns.
+        // However, we can use `sql(vendorData)` if column names match keys.
+        // But our DB columns are snake_case and input is camelCase.
+
+        // Let's manually map the camelCase inputs to snake_case columns
+        const updateMap: any = {};
+        if (vendorData.name) updateMap.name = vendorData.name;
+        if (vendorData.legalName) updateMap.legal_name = vendorData.legalName;
+        if (vendorData.type) updateMap.type = vendorData.type;
+        if (vendorData.status) updateMap.status = vendorData.status;
+        if (vendorData.email) updateMap.email = vendorData.email;
+        if (vendorData.phone) updateMap.phone = vendorData.phone;
+        if (vendorData.website) updateMap.website = vendorData.website;
+        if (vendorData.billingAddress) updateMap.billing_address = sql.json(vendorData.billingAddress as any);
+        if (vendorData.shippingAddress) updateMap.shipping_address = sql.json(vendorData.shippingAddress as any);
+        if (vendorData.contactPersons) updateMap.contact_persons = sql.json(vendorData.contactPersons as any);
+        if (vendorData.paymentTerms) updateMap.payment_terms = vendorData.paymentTerms;
+        if (vendorData.creditLimit) updateMap.credit_limit = vendorData.creditLimit;
+        if (vendorData.currency) updateMap.currency = vendorData.currency;
+        if (vendorData.bankDetails) updateMap.bank_details = sql.json(vendorData.bankDetails as any);
+        if (vendorData.taxInformation) updateMap.tax_information = sql.json(vendorData.taxInformation as any);
+        if (vendorData.businessRegistrationNumber) updateMap.business_registration_number = vendorData.businessRegistrationNumber;
+        if (vendorData.incorporationDate) updateMap.incorporation_date = vendorData.incorporationDate;
+        if (vendorData.industry) updateMap.industry = vendorData.industry;
+        if (vendorData.notes) updateMap.notes = vendorData.notes;
+        if (vendorData.tags) updateMap.tags = vendorData.tags; // tags is text[] or json? schema says text[]
+
+        // Add updated_at
+        updateMap.updated_at = new Date();
+
+        if (Object.keys(updateMap).length === 0) return null;
+
+        const [vendor] = await sql`
+            UPDATE vendors 
+            SET ${sql(updateMap)}
+            WHERE user_id = ${userId}
             RETURNING *
         `;
 

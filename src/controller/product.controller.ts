@@ -29,7 +29,7 @@ export class ProductController {
             } = body;
 
             // Validate required fields
-            if (!name || !slug || !sku || !price) {
+            if (!name || !slug || !sku || price === undefined) {
                 return {
                     success: false,
                     message: "Missing required fields: name, slug, sku, and price are required",
@@ -113,6 +113,7 @@ export class ProductController {
                 max_price,
                 is_featured,
                 search,
+                vendor_id,
                 limit,
                 offset,
                 sort_by,
@@ -127,6 +128,7 @@ export class ProductController {
             if (max_price) filters.max_price = parseFloat(max_price);
             if (is_featured !== undefined) filters.is_featured = is_featured === "true";
             if (search) filters.search = search;
+            if (vendor_id) filters.vendor_id = parseInt(vendor_id);
             if (limit) filters.limit = parseInt(limit);
             if (offset) filters.offset = parseInt(offset);
             if (sort_by) filters.sort_by = sort_by;
