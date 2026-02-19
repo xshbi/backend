@@ -11,6 +11,8 @@ import { adminOrderRoutes } from "./routes/admin.order.routes";
 import { cartRoutes } from "./routes/cart.routes";
 import { addressRoutes } from "./routes/address.routes";
 import { orderRoutes } from "./routes/order.routes";
+import { notificationRoutes } from "./routes/notification.routes";
+import { uploadRoutes } from "./routes/upload.routes";
 
 // Load environment variables
 dotenv.config();
@@ -20,6 +22,7 @@ const PORT = process.env.PORT || 3000;
 // CORS configuration - allow frontend to communicate with backend
 const corsOrigin = process.env.CORS_ORIGIN || [
 	"http://localhost:5173",    // Vite default dev port
+	"http://localhost:5174",    // Vite alternate port
 	"http://localhost:3000",    // Fallback
 	"http://localhost:5000",    // Alternative port
 ];
@@ -43,6 +46,8 @@ export const app = new Elysia()
 	.use(cartRoutes)
 	.use(addressRoutes)
 	.use(orderRoutes)
+	.use(notificationRoutes)
+	.use(uploadRoutes)
 	.listen(PORT);
 
 console.log(`🔥 Server running at http://localhost:${PORT}`);

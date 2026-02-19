@@ -138,6 +138,75 @@ export class OrderController {
     }
 
     /**
+     * Update Order Status (Vendor / Customer-facing)
+     * PATCH /api/orders/:id/status
+     */
+    static async updateOrderStatusVendor(context: AuthContext) {
+        try {
+            const params = context.params as any;
+            const body = context.body as any;
+            const userId = context.user?.userId;
+            const userRole = context.user?.role;
+            const orderId = parseInt(params.id);
+
+            if (!userId) {
+                context.set.status = 401;
+                return { success: false, message: "User not authenticated" };
+            }
+
+            if (!body.status) {
+                context.set.status = 400;
+                return { success: false, message: "Status is required" };
+            }
+
+            // Allowed forward transitions (vendor can't go backwards)
+            const ALLOWED: Record<string, string[]> = {
+                pending: ['confirmed', 'cancelled'],
+                confirmed: ['processing', 'cancelled'],
+                processing: ['packed', 'cancelled'],
+                packed: ['shipped'],
+                shipped: ['out_for_delivery'],
+                out_for_delivery: ['delivered'],
+            };
+
+            const order = await OrderModel.findById(orderId);
+            if (!order) {
+                context.set.status = 404;
+                return { success: false, message: "Order not found" };
+            }
+
+            // Only vendor or admin can update
+            if (userRole !== 'admin' && userRole !== 'vendor') {
+                context.set.status = 403;
+                return { success: false, message: "Access denied" };
+            }
+
+            const allowed = ALLOWED[order.status] ?? [];
+            if (!allowed.includes(body.status)) {
+                context.set.status = 400;
+                return {
+                    success: false,
+                    message: `Cannot transition from '${order.status}' to '${body.status}'`
+                };
+            }
+
+            const updated = await OrderModel.updateStatus(orderId, body.status, userId, body.notes);
+
+            return {
+                success: true,
+                message: "Order status updated successfully",
+                data: updated
+            };
+        } catch (error: any) {
+            context.set.status = 400;
+            return {
+                success: false,
+                message: error.message || "Failed to update order status"
+            };
+        }
+    }
+
+    /**
      * Cancel Order
      * POST /api/orders/:id/cancel
      */

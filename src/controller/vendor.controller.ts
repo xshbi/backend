@@ -1,6 +1,7 @@
 
 import type { Context } from 'elysia';
 import { VendorModel, type Vendor, VendorStatus, VendorType } from '../models/vendor.model';
+import { OrderModel } from '../models/order.model';
 import type { AuthContext } from '../middleware/auth.middleware';
 
 export class VendorController {
@@ -181,11 +182,11 @@ export class VendorController {
             const limit = query.limit ? parseInt(query.limit) : 20;
             const offset = query.offset ? parseInt(query.offset) : 0;
 
-            const orders = await import('../models/order.model').then(m => m.OrderModel.getVendorOrders(vendor.id, limit, offset));
+            const orders = await OrderModel.getVendorOrders(vendor.user_id, limit, offset);
 
             return {
                 success: true,
-                data: orders
+                data: orders || []
             };
         } catch (error: any) {
             console.error('Get vendor orders error:', error);
@@ -211,7 +212,7 @@ export class VendorController {
                 return { success: false, message: 'Vendor profile not found' };
             }
 
-            const stats = await import('../models/order.model').then(m => m.OrderModel.getVendorStats(vendor.id));
+            const stats = await OrderModel.getVendorStats(vendor.user_id);
 
             return {
                 success: true,

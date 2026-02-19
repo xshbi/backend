@@ -737,6 +737,28 @@ All admin routes require authentication and admin role.
 
 ## 9. Utility Routes
 
+#### Upload Image (Utility)
+
+- **Endpoint**: `POST /api/upload`
+- **Description**: Upload an image file to Cloudinary
+- **Access**: Private (Authenticated users)
+- **Headers**: `Authorization: Bearer {accessToken}`
+- **Request Body**: `multipart/form-data` with `file` field
+- **Response**:
+
+  ```json
+  {
+    "success": true,
+    "url": "http://res.cloudinary.com/...",
+    "public_id": "ecommerce_products/...",
+    "message": "Image uploaded successfully"
+  }
+  ```
+
+---
+
+## 10. Utility Routes
+
 #### Health Check
 
 - **Endpoint**: `GET /health`

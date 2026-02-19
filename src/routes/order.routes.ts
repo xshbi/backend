@@ -19,4 +19,7 @@ export const orderRoutes = new Elysia({ prefix: "/api/orders" })
     .get("/:id", (context) => OrderController.getOrderById(context as unknown as AuthContext))
 
     // Cancel an order
-    .post("/:id/cancel", (context) => OrderController.cancelOrder(context as unknown as AuthContext));
+    .post("/:id/cancel", (context) => OrderController.cancelOrder(context as unknown as AuthContext))
+
+    // Update order status (vendor/admin)
+    .patch("/:id/status", (context) => OrderController.updateOrderStatusVendor(context as unknown as AuthContext));
